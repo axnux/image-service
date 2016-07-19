@@ -1,0 +1,24 @@
+box: axnux/node-graphicsmagick
+# This is the build pipeline. Pipelines are the core of wercker
+# Read more about pipelines on our dev center
+# http://devcenter.wercker.com/docs/pipelines/index.html
+build:
+  steps:
+    # A step that executes `npm install` command
+    - npm-install
+    # A step that executes `npm test` command
+    - npm-test
+dev:
+  steps:
+    - script:
+        name: start development
+        code: npm run bdd
+# deploy:
+#   steps:
+#     # A step that executes `npm install` command
+#     - npm-install
+#     # A step that executes `npm test` command
+#     - npm-test
+#     - script:
+#         name: testing deploy
+#         code: node --version

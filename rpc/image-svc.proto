@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+import "media.proto";
+
+package media;
+
+
+service Image {
+  rpc Resize (MediaObject) returns (MediaObject) {}
+}

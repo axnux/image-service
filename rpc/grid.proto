@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+import "media.proto";
+
+package media;
+
+
+
+
+message MediaGrid {
+  // clockwise
+  MediaRepresentation topRight = 1;
+  MediaRepresentation bottomRight = 2;
+  MediaRepresentation bottomLeft = 3;
+  MediaRepresentation topLeft = 4;
+
+  MediaRepresentation combine = 5;
+}
