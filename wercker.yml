@@ -31,7 +31,7 @@ build: #NODE_ENV=development
     #     disable-sync: true
     #     username: $DOCKER_USERNAME  # replace DOCKER_USERNAME with your docker hub user name
     #     password: $DOCKER_PASSWORD  # replace DOCKER_PASSWORD with your docker hub password
-    #     repository: $DOCKER_REPO # replace DOCKER_REPO with your docker hub registries name. eg: axnux/image-service
+    #     repository: $DOCKER_REPO # replace DOCKER_REPO with your docker hub registries name. eg: axnux/sample-svc
     #     working-dir: /pipeline/source
     #     cmd: start
     #     entrypoint: /usr/local/bin/npm
