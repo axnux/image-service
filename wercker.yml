@@ -7,19 +7,23 @@ box:
 # run the following code in terminal
 # wercker dev --expose-ports=true
 dev: #NODE_ENV=development
+  box:
+    id: axnux/node-graphicsmagick
+    ports:
+      - "3000"  # nodejs port
+      - "1337"  # chrome UI for debugging
+      - "5858"  # port for node-inspector debugging socket
   steps:
     - npm-install # comment this out if you have already install npm dependencies
-
     # you have two options for local development
-    # 1. run dev server at port 3000. auto restart web app on file changes
-    - internal/watch:
-        code: npm start
-        reload: true
+    # - internal/watch:
+    #   code: npm run dev:debug
+    #   reload: true
 
-    # # 2. run in BDD mode. auto re-run test cases on file changes
-    # - script:
-    #     name: start bdd environment
-    #     code: npm run bdd
+    # 2. run in BDD mode. auto re-run test cases on file changes
+    - script:
+        name: start bdd environment
+        code: npm run bdd
 
 # wercker build
 build: #NODE_ENV=development
