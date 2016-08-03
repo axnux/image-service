@@ -16,40 +16,53 @@ dev: #NODE_ENV=development
   steps:
     - npm-install # comment this out if you have already install npm dependencies
     # you have two options for local development
-    # - internal/watch:
-    #   code: npm run dev:debug
-    #   reload: true
+    - internal/watch:
+      code: npm run dev:debug
+      reload: true
 
-    # 2. run in BDD mode. auto re-run test cases on file changes
-    - script:
-        name: start bdd environment
-        code: npm run bdd
+    # # 2. run in BDD mode. auto re-run test cases on file changes
+    # - script:
+    #     name: start bdd environment
+    #     code: npm run bdd
 
 # wercker build
 build: #NODE_ENV=development
   steps:
     - npm-install # comment this out if you have already install npm dependencies
     - npm-test
+
+    # wercker --environment config/container_env/local.env build --docker-local
     # uncomment the following to enable docker image creation
     # - internal/docker-push:
     #     disable-sync: true
     #     username: $DOCKER_USERNAME  # replace DOCKER_USERNAME with your docker hub user name
     #     password: $DOCKER_PASSWORD  # replace DOCKER_PASSWORD with your docker hub password
-    #     repository: $DOCKER_REPO # replace DOCKER_REPO with your docker hub registries name. eg: axnux/sample-svc
-    #     working-dir: /pipeline/source
+    #     repository: $DOCKER_USERNAME/$DOCKER_REPO # replace DOCKER_REPO with your docker hub registries name. eg: axnux/sample-svc
+    #     working-dir: $WERCKER_SOURCE_DIR
     #     cmd: start
     #     entrypoint: /usr/local/bin/npm
     #     tag: debug-build
 
-test: #NODE_ENV=test
+  # optional slack notifier
+  after-steps: # send notification to slack
+    - slack-notifier:
+        url: $SLACK_WEB_HOOK
+        channel: updates
+        username: Wercker Bot
+
+update-doc:
+  box:
+    id: axnux/swagger2aglio:latest
   steps:
     - script:
-        name: named current folder
-        code: pwd
-    - script:
-        name: list current folder
-        code: ls
-    - npm-test
+        name: generate api doc
+        code: swagger2aglio --theme-variables slate --input ./docs/api.yml --output ./docs/api_doc/api.html
+    - s3sync: # synchronize api docs and test coverage report to s3
+        source_dir: ./docs/
+        delete_removed: true
+        bucket_url: $S3_TEST_REPORT_BUCKET_URL$WERCKER_MAIN_PIPELINE_STARTED-$WERCKER_GIT_COMMIT/ # eg: s3://bucket-name/ # make sure the trailing '/' is always there
+        key_id: $S3_TEST_REPORT_ACCESS_KEY_ID
+        key_secret: $S3_TEST_REPORT_SECRET_ACCESS_KEY
 
 docker:
   steps:
@@ -71,14 +84,31 @@ build-production: #NODE_ENV=production
     - script:
         name: clean npm modules
         code: rm -rf node_modules/*
+    - npm-install
+    - npm-test
     - script:
         name: set to production environment
         code: export NODE_ENV=production
     - script:
-        name: install minimal npm dependencies
-        code: npm install --production
+        name: release build
+        code: npm run release:build
+    - script:
+        name: npm prune
+        code: npm prune
+    - script:
+        name: list node_modules
+        code: ls ./node_modules
+    # TODO static build nodejs
+    - script:
+        name: copy files
+        code: |
+          cp $(which node) "$WERCKER_OUTPUT_DIR"
+          rm -rf ./node_modules/.bin
+          cp -RL ./node_modules ./src ./config ./tmp ./server.js ./package.json "$WERCKER_OUTPUT_DIR"
 
 docker-production:
+  box:
+    id: node:6-slim
   steps:
     - internal/docker-push:
         disable-sync: true
@@ -86,13 +116,19 @@ docker-production:
         password: $DOCKER_PASSWORD  # define DOCKER_PASSWORD in your wercker dashboard
         working-dir: $WERCKER_SOURCE_DIR
         env: NODE_ENV=production
-        cmd: start
-        entrypoint: /usr/local/bin/npm
+        cmd: ./node ./server.js
         tag: production
         repository: axnux/image-service
         author: axnux
 
+  # after-steps: # send notification to slack
+  #   - slack-notifier:
+  #       url: $SLACK_WEB_HOOK
+  #       channel: updates
+  #       username: Wercker Bot
+  #       notify_on: failed
+
 
 ## advanced
 ## to inject environment variable into the container. prefix the environment variable name with X_ in the *.env file below
-##     --environment container_env/build_development.env
+##     --environment config/container_env/local.env
