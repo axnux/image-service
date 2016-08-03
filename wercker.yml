@@ -60,7 +60,7 @@ update-doc:
     - s3sync: # synchronize api docs and test coverage report to s3
         source_dir: ./docs/
         delete_removed: true
-        bucket_url: $S3_TEST_REPORT_BUCKET_URL$WERCKER_MAIN_PIPELINE_STARTED-$WERCKER_GIT_COMMIT/ # eg: s3://bucket-name/ # make sure the trailing '/' is always there
+        bucket_url: $S3_TEST_REPORT_BUCKET_URL/$WERCKER_GIT_REPOSITORY/$WERCKER_MAIN_PIPELINE_STARTED-$WERCKER_GIT_COMMIT/ # eg: s3://bucket-name/ # make sure the trailing '/' is always there
         key_id: $S3_TEST_REPORT_ACCESS_KEY_ID
         key_secret: $S3_TEST_REPORT_SECRET_ACCESS_KEY
 
