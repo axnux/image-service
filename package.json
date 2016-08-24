@@ -1,7 +1,7 @@
 {
-  "name": "media-svc",
+  "name": "image-svc",
   "version": "0.1.0",
-  "description": "microservices for handling media",
+  "description": "microservices for handling image",
   "main": "server.js",
   "scripts": {
     "start": "gulp start",
@@ -12,7 +12,7 @@
     "release:build": "gulp release:build"
   },
   "keywords": [
-    "media",
+    "image",
     "microservices"
   ],
   "dependencies": {
@@ -22,8 +22,9 @@
     "gm": "^1.22.0",
     "grpc": "^0.15.0",
     "gulp": "~3.9.1",
-    "lodash": "~4.13.1",
+    "lodash": "~4.15.0",
     "method-override": "~2.3.6",
+    "winston-daily-rotate-file": "~1.3.0",
     "multer": "~1.1.0"
   },
   "devDependencies": {
@@ -36,13 +37,15 @@
     "gulp-node-inspector": "^0.1.0",
     "gulp-nodemon": "^2.1.0",
     "istanbul": "^0.4.4",
+    "mkdirp": "~0.5.1",
     "mocha": "~2.5.3",
     "node-inspector": "^0.12.8",
     "nodemon": "^1.10.0",
     "run-sequence": "~1.2.2",
     "sinon": "~1.17.4",
     "sinon-chai": "~2.8.0",
-    "supertest": "~1.2.0"
+    "supertest": "~1.2.0",
+    "yargs": "~4.8.1"
   },
   "author": "axnux",
   "license": "MIT"

@@ -3,22 +3,21 @@ box:
   ports: # decide which port to expose to host
     - "3000"
 
-### development workflow ###
-# run the following code in terminal
 # wercker dev --expose-ports=true
 dev: #NODE_ENV=development
   box:
-    id: axnux/node-graphicsmagick
+    id: node:6
     ports:
       - "3000"  # nodejs port
       - "1337"  # chrome UI for debugging
       - "5858"  # port for node-inspector debugging socket
   steps:
-    - npm-install # comment this out if you have already install npm dependencies
+    - npm-install
     # you have two options for local development
-    - internal/watch:
-      code: npm run dev:debug
-      reload: true
+    # # 1. Run in local development debugging mode. auto re-run on files changes
+    - script:
+        name: start dev environment
+        code: npm run dev:debug
 
     # # 2. run in BDD mode. auto re-run test cases on file changes
     # - script:
@@ -30,30 +29,44 @@ build: #NODE_ENV=development
   steps:
     - npm-install # comment this out if you have already install npm dependencies
     - npm-test
-
-    # wercker --environment config/container_env/local.env build --docker-local
-    # uncomment the following to enable docker image creation
+    # load $MASTER_S3_CONFIG from wercker dashboard
+    # will fallback to default values provided in config/container_env/master.s3.config if it exists
+    - script:
+        name: read s3 config for wercker
+        code: source config/container_env/env-parser.sh
+    # download the env-provisioner.sh from s3 using the configuration from the above $MASTER_S3_CONFIG
+    - arjen/s3get:
+        access_key: $MASTER_S3_CONFIG_ACCESS_KEY_ID
+        secret_key: $MASTER_S3_CONFIG_SECRET_ACCESS_KEY
+        bucket: $MASTER_S3_CONFIG_BUCKET
+        key: $MASTER_S3_CONFIG_ENV_SH
+        region: $MASTER_S3_CONFIG_REGION
+        filename: config/container_env/env-provisioner.sh
+    # uncomment the following to enable docker image creation to docker hub
+    # - script:
+    #     name: set deploy image repository
+    #     code: export DEPLOY_IMAGE_REPO=${DEPLOY_IMAGE_REPO="$DOCKER_USERNAME/$DOCKER_REPO"}
     # - internal/docker-push:
-    #     disable-sync: true
     #     username: $DOCKER_USERNAME  # replace DOCKER_USERNAME with your docker hub user name
     #     password: $DOCKER_PASSWORD  # replace DOCKER_PASSWORD with your docker hub password
-    #     repository: $DOCKER_USERNAME/$DOCKER_REPO # replace DOCKER_REPO with your docker hub registries name. eg: axnux/sample-svc
+    #     repository: $DEPLOY_IMAGE_REPO # replace DOCKER_REPO with your docker hub registries name. eg: sample-svc
     #     working-dir: $WERCKER_SOURCE_DIR
-    #     cmd: start
-    #     entrypoint: /usr/local/bin/npm
+    #     entrypoint: gulp dev --debug
     #     tag: debug-build
+    #     ports:
+    #        - "3000"  # nodejs port
+    #        - "1337"  # chrome UI for debugging
+    #        - "5858"  # port for node-inspector debugging socket
 
-  # optional slack notifier
-  after-steps: # send notification to slack
-    - slack-notifier:
-        url: $SLACK_WEB_HOOK
-        channel: updates
-        username: Wercker Bot
-
+# optional step to generate api docs and test coverage report
 update-doc:
   box:
     id: axnux/swagger2aglio:latest
   steps:
+    # expose the environment variables provided in env-provisioner.sh
+    - script:
+        name: read environment variables from default env vars files
+        code: source config/container_env/env-provisioner.sh
     - script:
         name: generate api doc
         code: swagger2aglio --theme-variables slate --input ./docs/api.yml --output ./docs/api_doc/api.html
@@ -66,21 +79,36 @@ update-doc:
 
 docker:
   steps:
+    # expose the environment variables provided in env-provisioner.sh
+    - script:
+        name: read environment variables from default env vars files
+        code: source config/container_env/env-provisioner.sh
+    - script:
+        name: store env provisioner
+        code: mv config/container_env/env-provisioner.sh $WERCKER_CACHE_DIR/env-provisioner.sh
+    - script:
+        name: set deploy image repository
+        code: export DEPLOY_IMAGE_REPO=${DEPLOY_IMAGE_REPO="$DOCKER_USERNAME/$DOCKER_REPO"}
     - internal/docker-push:
-        disable-sync: true
         username: $DOCKER_USERNAME  # define DOCKER_USERNAME in your wercker dashboard
         password: $DOCKER_PASSWORD  # define DOCKER_PASSWORD in your wercker dashboard
         working-dir: $WERCKER_SOURCE_DIR
         env: NODE_ENV=development
-        cmd: start
-        entrypoint: /usr/local/bin/npm
+        entrypoint: /usr/local/bin/node server.js
         tag: development
-        repository: axnux/image-service
+        repository: $DEPLOY_IMAGE_REPO
         author: axnux
+    - script:
+        name: restore env provisioner
+        code: mv $WERCKER_CACHE_DIR/env-provisioner.sh config/container_env/env-provisioner.sh
 
 ### release workflow ###
 build-production: #NODE_ENV=production
   steps:
+    # expose the environment variables provided in env-provisioner.sh
+    - script:
+        name: read environment variables from default env vars files
+        code: source config/container_env/env-provisioner.sh
     - script:
         name: clean npm modules
         code: rm -rf node_modules/*
@@ -98,28 +126,40 @@ build-production: #NODE_ENV=production
     - script:
         name: list node_modules
         code: ls ./node_modules
-    # TODO static build nodejs
-    - script:
+    - script: # TODO static build nodejs
         name: copy files
         code: |
           cp $(which node) "$WERCKER_OUTPUT_DIR"
           rm -rf ./node_modules/.bin
-          cp -RL ./node_modules ./src ./config ./tmp ./server.js ./package.json "$WERCKER_OUTPUT_DIR"
+          cp -RL ./node_modules ./src ./deploy ./config ./tmp ./server.js ./package.json "$WERCKER_OUTPUT_DIR"
 
 docker-production:
   box:
     id: node:6-slim
   steps:
+    # expose the environment variables provided in env-provisioner.sh
+    - script:
+        name: read environment variables from default env vars files
+        code: source config/container_env/env-provisioner.sh
+    - script:
+        name: store env provisioner
+        code: mv config/container_env/env-provisioner.sh $WERCKER_CACHE_DIR/env-provisioner.sh
+    - script:
+        name: set deploy image repository
+        code: export DEPLOY_IMAGE_REPO=${DEPLOY_IMAGE_REPO="$DOCKER_USERNAME/$DOCKER_REPO"}
     - internal/docker-push:
-        disable-sync: true
         username: $DOCKER_USERNAME  # define DOCKER_USERNAME in your wercker dashboard
         password: $DOCKER_PASSWORD  # define DOCKER_PASSWORD in your wercker dashboard
         working-dir: $WERCKER_SOURCE_DIR
-        env: NODE_ENV=production
+        env: |
+          NODE_ENV=production
         cmd: ./node ./server.js
         tag: production
-        repository: axnux/image-service
+        repository: $DEPLOY_IMAGE_REPO
         author: axnux
+    - script:
+        name: restore env provisioner
+        code: mv $WERCKER_CACHE_DIR/env-provisioner.sh config/container_env/env-provisioner.sh
 
   # after-steps: # send notification to slack
   #   - slack-notifier:
@@ -129,6 +169,51 @@ docker-production:
   #       notify_on: failed
 
 
-## advanced
-## to inject environment variable into the container. prefix the environment variable name with X_ in the *.env file below
-##     --environment config/container_env/local.env
+# if you are launching your kubernetes stack with kube-aws
+# you already have all the necessary pem files in place
+k8s-deploy:
+  box:
+    id: axnux/alpine-aws-ecr:latest
+  steps:
+    # expose the environment variables provided in env-provisioner.sh
+    - script:
+        name: read environment variables from default env vars files
+        code: source config/container_env/env-provisioner.sh
+    - script:
+        name: set deploy image repository
+        code: export DEPLOY_IMAGE_REPO=${DEPLOY_IMAGE_REPO="$DOCKER_USERNAME/$DOCKER_REPO"}
+    - script:
+      name: download files for kubernetes
+      code: |
+        AWS_ACCESS_KEY_ID=$S3_ACCESS_KEY_FOR_KUBERNETES AWS_SECRET_ACCESS_KEY=$S3_SECRET_KEY_FOR_KUBERNETES AWS_DEFAULT_REGION=$S3_REGION_FOR_KUBERNETES \
+          aws s3 cp s3://$S3_BUCKET_FOR_KUBERNETES deploy --recursive
+    - xun91/bash-templater:
+      template: deploy/service-template.yml
+      output: deploy/zap.yml
+      # anything that is declared here will be available as parameters in servie-template.yml file
+      parameters:
+        GIT_COMMIT_HASH=$WERCKER_GIT_COMMIT
+        DEPLOY_IMAGE_REPO=$DEPLOY_IMAGE_REPO
+        DEPLOY_IMAGE_TAG=$DEPLOY_IMAGE_TAG
+        DEPLOY_SERVICE_PORT=$DEPLOY_SERVICE_PORT
+        IMAGE_SERVICE_UPLOAD_DIR=$IMAGE_UPLOAD_DIR
+        IMAGE_AWS_S3_KEY_ID=$IMAGE_AWS_S3_KEY_ID
+        IMAGE_AWS_S3_REGION=$IMAGE_AWS_S3_REGION
+        IMAGE_AWS_S3_SECRET_ACCESS_KEY=$IMAGE_AWS_S3_SECRET_ACCESS_KEY
+        IMAGE_AWS_S3_BUCKET=$IMAGE_AWS_S3_BUCKET
+    - script:
+      name: print deployment file
+      code: cat deploy/zap.yml
+    - kubectl:
+      server: $KUBERNETES_MASTER
+      certificate-authority: deploy/ca.pem
+      client-certificate: deploy/admin.pem
+      client-key: deploy/admin-key.pem
+      command: apply -f deploy/zap.yml
+
+# optional slack notifier
+# after-steps: # send notification to slack
+#   - slack-notifier:
+#       url: $SLACK_WEB_HOOK
+#       channel: updates
+#       username: Wercker Bot

@@ -1,0 +1,56 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{DEPLOY_SERVICE_NAME=img-svc}}
+spec:
+  selector:
+    name: {{DEPLOY_SERVICE_NAME}}
+  type: LoadBalancer # comment this out if you do not want your service to be accessible from outside of the private network
+  ports:
+    - name: {{DEPLOY_SERVICE_NAME}}-lb
+      protocol: TCP
+      port: {{DEPLOY_SERVICE_PORT=2200}}
+      targetPort: {{NODE_APP_PORT=3000}}
+---
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  name: {{DEPLOY_SERVICE_NAME}}
+spec:
+  replicas: {{REPLICA_COUNT=1}}
+  template:
+    metadata:
+      labels:
+        name: {{DEPLOY_SERVICE_NAME}}
+        # git-hash: {{GIT_COMMIT_HASH}}
+    spec:
+      # uncomment the image pull secrets if you are using private docker registry
+      # imagePullSecrets:
+      #   - name: {{DEPLOY_IMAGE_PULL_SECRET}}
+      containers:
+        - name: {{DEPLOY_SERVICE_NAME}}
+          image: {{DEPLOY_IMAGE_REPO}}:{{DEPLOY_IMAGE_TAG=development}} # your docker hub repo name
+          imagePullPolicy: Always
+          # if using aws ecr. please use the following
+          # image: {{AWS_ECR_ID}}.dkr.ecr.{{AWS_ECR_REGION}}.amazonaws.com/{{DOCKER_REPO}}:{{DEPLOY_IMAGE_TAG=development}}
+          volumeMounts:
+            - name: upload-vol
+              mountPath: {{IMAGE_SERVICE_UPLOAD_DIR=/tmp/upload}}
+          env:
+            - name: UPLOAD_DIR
+              value: $IMAGE_SERVICE_UPLOAD_DIR
+            - name: S3_REGION
+              value: $IMAGE_AWS_S3_REGION
+            - name: S3_ACCESS_KEY_ID
+              value: $IMAGE_AWS_S3_KEY_ID
+            - name: S3_SECRET_ACCESS_KEY
+              value: $IMAGE_AWS_S3_SECRET_ACCESS_KEY
+            - name: S3_BUCKET
+              value: $IMAGE_AWS_S3_BUCKET
+          ports:
+            - containerPort: {{NODE_APP_PORT}}
+            # - containerPort: 1337 # open this only if it is development
+            # - containerPort: 5858 # open this only if it is development
+      volumes:
+        - name: upload-vol
+          emptyDir: {}
