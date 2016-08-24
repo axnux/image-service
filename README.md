@@ -118,7 +118,7 @@ winston.error('something went wrong')
 ## Wercker workflow
 We have created a continuous delivery workflow as below:  
 
-![Imgur](http://i.imgur.com/pwhnH6Q.png)
+![Imgur](http://i.imgur.com/0qfoMaB.png)
 
 Here is what happens in the pipelines:  
 

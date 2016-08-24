@@ -89,6 +89,9 @@ docker:
     - script:
         name: set deploy image repository
         code: export DEPLOY_IMAGE_REPO=${DEPLOY_IMAGE_REPO="$DOCKER_USERNAME/$DOCKER_REPO"}
+    - script:
+        name: print env vars
+        code: env
     - internal/docker-push:
         username: $DOCKER_USERNAME  # define DOCKER_USERNAME in your wercker dashboard
         password: $DOCKER_PASSWORD  # define DOCKER_PASSWORD in your wercker dashboard
@@ -147,6 +150,9 @@ docker-production:
     - script:
         name: set deploy image repository
         code: export DEPLOY_IMAGE_REPO=${DEPLOY_IMAGE_REPO="$DOCKER_USERNAME/$DOCKER_REPO"}
+    - script:
+        name: print env vars
+        code: env
     - internal/docker-push:
         username: $DOCKER_USERNAME  # define DOCKER_USERNAME in your wercker dashboard
         password: $DOCKER_PASSWORD  # define DOCKER_PASSWORD in your wercker dashboard
