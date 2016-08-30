@@ -2,6 +2,7 @@
 
 var fs = require('fs')
 var image = require('./../../src/image/image')
+var mergedConfig = require('./../../config/default')
 // var sinon = require('sinon')
 var chai = require('chai')
 var expect = chai.expect
@@ -14,7 +15,7 @@ describe('Image service', function () {
   describe('resize image', function () {
     var path = './test/fixtures/output/dummy-resized.png'
 
-    beforeEach(function (done) {
+    afterEach(function (done) {
       if (fs.existsSync(path)) {
         fs.unlinkSync(path)
       }
@@ -49,7 +50,7 @@ describe('Image service', function () {
   describe('crop image', function () {
     var path = './test/fixtures/output/dummy-cropped.png'
 
-    beforeEach(function (done) {
+    afterEach(function (done) {
       if (fs.existsSync(path)) {
         fs.unlinkSync(path)
       }
@@ -72,7 +73,7 @@ describe('Image service', function () {
   describe('create thumbnail', function () {
     var path = './test/fixtures/output/dummy-thumbnail.png'
 
-    beforeEach(function (done) {
+    afterEach(function (done) {
       if (fs.existsSync(path)) {
         fs.unlinkSync(path)
       }
@@ -108,7 +109,7 @@ describe('Image service', function () {
   describe('create gif', function () {
     var gifFile = './test/fixtures/output/dummy.gif'
 
-    beforeEach(function (done) {
+    afterEach(function (done) {
       if (fs.existsSync(gifFile)) {
         fs.unlinkSync(gifFile)
       }
@@ -127,7 +128,7 @@ describe('Image service', function () {
 
   describe('extract frames', function () {
     //
-    beforeEach(function (done) {
+    afterEach(function (done) {
       var gifFileToBeDeleted1 = './test/fixtures/output/dummy_01.png'
       var gifFileToBeDeleted2 = './test/fixtures/output/dummy_02.png'
       var gifFileToBeDeleted3 = './test/fixtures/output/dummy_03.png'
@@ -152,23 +153,35 @@ describe('Image service', function () {
     })
   })
 
-  // describe('image storage', function () {
-  //   //
-  //   beforeEach(function (done) {
-  //     //
-  //   })
-  //
-  //   it('should be able to store image into s3', function (done) {
-  //     var s3bucket = 'bucket'
-  //     var destination = ''
-  //     image.store(file, s3bucket, destination, function (err, meta) {
-  //       if (err) {
-  //         //
-  //       }
-  //       done()
-  //     })
-  //   })
-  // })
+  describe.only('image storage', function () {
+    //
+    var destination = 'test/store-output.png'
+    var config = {
+      s3Options: mergedConfig.s3Options,
+      uploads: mergedConfig.uploads
+    }
+
+    afterEach(function (done) {
+      image.remove(destination, config, function (err) {
+        if (err) {
+          //
+        }
+        done()
+      })
+    })
+
+    it('should be able to store image into s3', function (done) {
+      this.timeout(20000)
+      image.store(file, destination, config, function (err, meta) {
+        if (err) {
+          //
+        }
+        expect(meta).to.have.all.keys(['region', 'bucket', 'remote', 'url', 'millitimestamp'])
+        expect(meta.url).to.have.string('http')
+        done()
+      })
+    })
+  })
 
   // it('should be able to combine four images into a mosaic tile')
 })

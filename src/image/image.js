@@ -3,6 +3,7 @@
 // var config = require('./../../config/default')
 // var _ = require('lodash')
 var gm = require('gm')
+var storageHelper = require('storage-lib')
 
 exports.read = function (sourceFile, done) {
   gm(sourceFile)
@@ -115,4 +116,26 @@ exports.splitGif = function (gifFile, imagePattern, done) {
     done()
   })
   // gm convert animation.gif +adjoin frame%02d.gif
+}
+
+exports.store = function (file, destination, config, done) {
+  var storageInstance = storageHelper(config)
+  storageInstance.toS3(file, destination, function (err, url) {
+    var meta = {
+      region: config.s3Options.region,
+      bucket: config.uploads.s3Bucket,
+      remote: destination,
+      url: url,
+      millitimestamp: Date.now()
+    }
+    if (err) {
+      //
+    }
+    done(err, meta)
+  })
+}
+
+exports.remove = function (file, config, done) {
+  var storageInstance = storageHelper(config)
+  storageInstance.removeFile(file, done)
 }

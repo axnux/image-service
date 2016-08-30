@@ -11,12 +11,6 @@ module.exports = {
   },
   uploads: {
     s3Bucket: process.env.S3_BUCKET || '',
-    dest: process.env.UPLOAD_DIR || '/tmp/upload',
-    image: {
-      dest: '/img'
-    },
-    video: {
-      dest: '/vid'
-    }
+    dest: process.env.UPLOAD_DIR || '/tmp/upload'
   }
 }

@@ -41,16 +41,6 @@ gulp.task('make-uploads-dir', function () {
       console.error(err)
     }
   })
-  mkdirp(mergedConfig.uploads.dest + mergedConfig.uploads.image.dest, function (err) {
-    if (err && err.code !== 'EEXIST') {
-      console.error(err)
-    }
-  })
-  mkdirp(mergedConfig.uploads.dest + mergedConfig.uploads.video.dest, function (err) {
-    if (err && err.code !== 'EEXIST') {
-      console.error(err)
-    }
-  })
 })
 
 // ESLint JS linting task

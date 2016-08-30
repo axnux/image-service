@@ -1,4 +1,4 @@
-# Microservices for Image [![wercker status](https://app.wercker.com/status/812f92fff4a3e5c610d61d083dd73194/s "wercker status")](https://app.wercker.com/project/bykey/812f92fff4a3e5c610d61d083dd73194) [![Dependency Status](https://gemnasium.com/badges/github.com/axnux/image-service.svg)](https://gemnasium.com/github.com/axnux/image-service)
+# Microservices for Image [![wercker status](https://app.wercker.com/status/812f92fff4a3e5c610d61d083dd73194/s "wercker status")](https://app.wercker.com/project/bykey/812f92fff4a3e5c610d61d083dd73194) [![Dependency Status](https://gemnasium.com/badges/github.com/axnux/image-service.svg)](https://gemnasium.com/github.com/axnux/image-service)  [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/axnux/image-service/issues)  
 
 An *experimental* nodejs microservices for handling image processing
 
