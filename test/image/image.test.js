@@ -7,6 +7,7 @@ var chai = require('chai')
 var expect = chai.expect
 // chai.use(require('sinon-chai'))
 
+// real test. no mocking
 describe('Image service', function () {
   var file = './test/fixtures/dummy.png'
 
@@ -150,5 +151,24 @@ describe('Image service', function () {
       })
     })
   })
+
+  // describe('image storage', function () {
+  //   //
+  //   beforeEach(function (done) {
+  //     //
+  //   })
+  //
+  //   it('should be able to store image into s3', function (done) {
+  //     var s3bucket = 'bucket'
+  //     var destination = ''
+  //     image.store(file, s3bucket, destination, function (err, meta) {
+  //       if (err) {
+  //         //
+  //       }
+  //       done()
+  //     })
+  //   })
+  // })
+
   // it('should be able to combine four images into a mosaic tile')
 })
