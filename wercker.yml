@@ -134,7 +134,7 @@ build-production: #NODE_ENV=production
         code: |
           cp $(which node) "$WERCKER_OUTPUT_DIR"
           rm -rf ./node_modules/.bin
-          cp -RL ./node_modules ./src ./deploy ./config ./tmp ./server.js ./package.json "$WERCKER_OUTPUT_DIR"
+          cp -RL ./node_modules ./src ./deploy ./config ./server.js ./package.json "$WERCKER_OUTPUT_DIR"
 
 docker-production:
   box:
